@@ -22,7 +22,7 @@ async function handleAdEmploye(firstname, lastname, email, phone) {
         });
         if(req.ok){
             const res = await req.json() ;
-            alert("Employe muvaffaqiyatli qqo'shildi ") ;
+            alert(`Employe muvaffaqiyatli qqo'shildi, Employening kirish kodi:${res.id} ` ) ;
             window.location.href = '/employes' ;
         }
     } catch (error) {

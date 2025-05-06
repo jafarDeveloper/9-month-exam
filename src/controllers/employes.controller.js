@@ -53,7 +53,7 @@ class EmployesController {
 
                     await req.writeFile("employes", employes);
 
-                return res.status(201).json({ message: "Employee successfully created", status: 201 });
+                return res.status(201).json({ message: "Employee successfully created",id:newEmploye.userId,  status: 201 });
                 } else {
                  throw new ClientError("Employee already exists", 400);
                 }

@@ -7,5 +7,14 @@
         "empId": 1,
         "kppId": "Asosiy Eshik",
         "imagePath": "https://res.cloudinary.com/depowb2m3/image/upload/v1746536381/fileUpload/tpwuo8lcmneydn5j7ng5.jpg"
+    },
+    {
+        "id": 2,
+        "firstname": "ja'far",
+        "time": "06.05.2025, 18:23:17",
+        "direction": "In",
+        "empId": 1,
+        "kppId": "Orqa Eshik",
+        "imagePath": "https://res.cloudinary.com/depowb2m3/image/upload/v1746537796/fileUpload/fhimlfq9vfrdjtbg5geo.jpg"
     }
 ]
