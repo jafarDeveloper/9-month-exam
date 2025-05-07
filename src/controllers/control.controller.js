@@ -1,59 +1,68 @@
-import { globalError } from "shokhijakhon-error-handler";
+import { ClientError, globalError } from "shokhijakhon-error-handler";
 import { addTime } from "../middlewares/addTime.js";
-import {deleteFileFromCloudinary} from "../middlewares/multer.js"
 
 class ControlController {
   constructor() {
     this.controlPost = async function (req, res) {
       try {
+        // req.body mavjudligini tekshirish
+        if (!req.body) {
+          throw new ClientError("Request body is missing", 400);
+        }
+
         let { direction, empId, kppId } = req.body;
         let imagePath = req.file?.path;
-    
+
+        // Validatsiya
         if (!direction || !empId || !kppId || !imagePath) {
-          return res.status(400).json({
-            message: "Direction or Image or EmpId or KppId not found",
-            status: 400,
-          });
+          throw new ClientError(
+            "Direction, Image, EmpId, or KppId not found",
+            400
+          );
         }
-    
+
+        // direction faqat "in" yoki "out" bo‘lishi kerak
+        if (!["in", "out"].includes(direction.toLowerCase())) {
+          throw new ClientError("Direction must be 'in' or 'out'", 400);
+        }
+
+        // empId va kppId raqam ekanligini tekshirish
+        empId = Number(empId);
+        kppId = Number(kppId);
+        if (isNaN(empId) || isNaN(kppId)) {
+          throw new ClientError("EmpId and KppId must be valid numbers", 400);
+        }
+
         let [controlDb, employeDb, kppDb] = await Promise.all([
           req.readFile("controls"),
           req.readFile("employes"),
           req.readFile("kpp"),
         ]);
-    
-        empId = Number(empId);
-        kppId = Number(kppId);
-    
+
         let isEmpExist = employeDb.find((emp) => emp.id === empId);
         let isKppExist = kppDb.find((kpp) => kpp.id === kppId);
-    
+
         if (!isEmpExist || !isKppExist) {
-          return res.status(404).json({
-            message: "Employee or KPP not found!",
-            status: 404,
-          });
+          throw new ClientError("Employee or KPP not found", 404);
         }
+
         const lastControl = [...controlDb]
           .reverse()
           .find((control) => control.empId === empId);
-    
+
         if (lastControl) {
           if (lastControl.direction === direction) {
-            return res.status(400).json({
-              message: `Employee already ${direction === "in" ? "entered" : "exited"}.`,
-              status: 400,
-            });
+            throw new ClientError(
+              `Employee already ${direction === "in" ? "entered" : "exited"}`,
+              400
+            );
           }
         } else {
           if (direction !== "in") {
-            return res.status(400).json({
-              message: "First entry must be 'in'.",
-              status: 400,
-            });
+            throw new ClientError("First entry must be 'in'", 400);
           }
         }
-    
+
         let newControl = {
           id: controlDb.length ? controlDb.at(-1).id + 1 : 1,
           firstname: isEmpExist.firstname,
@@ -63,10 +72,10 @@ class ControlController {
           kppId: isKppExist.gateLocation,
           imagePath: imagePath,
         };
-    
+
         controlDb.push(newControl);
         await req.writeFile("controls", controlDb);
-    
+
         return res.status(201).json({
           message: `Control (${direction.toUpperCase()}) successfully created`,
           status: 201,
@@ -75,61 +84,23 @@ class ControlController {
         return globalError(err, res);
       }
     };
-         
 
     this.controlGet = async function (req, res) {
       try {
-        let [controlDb, employeDb] = new Promise.all([
+        let [controlDb, employeDb] = await Promise.all([
           req.readFile("controls"),
-          req.readFile("employes")
-        ])
-        res
-          .status(200)
-          .json({
-            message: "Control successfuly fetchted !",
-            status: 200,
-            res: controlDb,
-          });
-      } catch (err) {
-        return globalError(err, res);
-      }
-    };
+          req.readFile("employes"),
+        ]);
 
-    this.controlDelete = async function (req, res) {
-      try {
-        const { controlId } = req.params;
-    
-        let controlDb = await req.readFile("controls");
-    
-        let controlToDelete = controlDb.find(control => control.id === Number(controlId));
-    
-        if (!controlToDelete) {
-          return res.status(404).json({
-            message: "Control not found!",
-            status: 404,
-          });
-        }
-    
-      const imagePath = controlToDelete.imagePath;
-      const parts = imagePath.split("/upload/");
-      const publicIdWithExtension = parts[1];
-      const publicId = publicIdWithExtension.split("/").slice(1).join("/").split(".")[0];
-
-    
-        await deleteFileFromCloudinary(publicId);
-    
-        controlDb = controlDb.filter(control => control.id !== Number(controlId));
-        await req.writeFile("controls", controlDb);
-    
-        return res.status(200).json({
-          message: "Control and image successfully deleted!",
+        res.status(200).json({
+          message: "Control successfully fetched!",
           status: 200,
+          data: controlDb,
         });
       } catch (err) {
         return globalError(err, res);
       }
     };
-    
   }
 }
 

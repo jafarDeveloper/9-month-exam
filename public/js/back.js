@@ -89,11 +89,12 @@ uploadBtn.addEventListener("click", async () => {
   try {
     const response = await fetch("http://localhost:4000/api/controls/create", {
       method: "POST",
+      "content-type":"multipart/form-data",
       body: formData,
     });
 
     const data = await response.json();
-    alert("Control succsessfuly created !");
+    alert(data.message);
     window.location.href = "/back";
   } catch (err) {
     console.log("Error: " + err.message);

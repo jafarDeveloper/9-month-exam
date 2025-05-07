@@ -93,8 +93,8 @@ uploadBtn.addEventListener("click", async () => {
     });
 
     const data = await response.json();
-    alert("Control succsessfuly created !");
-    window.location.href = "/back";
+    alert(data.message);
+    window.location.href = "/main";
   } catch (err) {
     console.log("Error: " + err.message);
   }
